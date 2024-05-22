@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Chat</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/styles.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <h2 class="text-center mb-4">流式聊天界面</h2>
+            <div id="chat-box">
+                <!-- Chat messages will be appended here -->
+            </div>
+            <form id="chat-form" class="input-group mb-3">
+                <input type="text" id="message" class="form-control" placeholder="输入你的问题">
+                <div class="input-group-append">
+                    <button id="send-btn" class="btn btn-primary" type="submit">发送</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/script.js"></script>
+</body>
+</html>
