@@ -11,8 +11,9 @@ def index():
 
 @app.route('/chat-stream')
 def chat_stream():
+    message = request.args.get('message')
     responses = [
-        "这是第一部分回应。",
+        message,
         "这是第二部分回应。",
         {"type": "text", "content": "这是第三部分回应，带有文字。"},
         {"type": "image", "content": "/uploads/sample_image.jpg"},
@@ -28,6 +29,7 @@ def chat_stream():
                     yield f"data: text|{char}\n\n"
                     time.sleep(0.05)  # Adjust speed here
                 yield f"data: text|\n\n"  # Indicate end of response
+            time.sleep(1)  # Wait before sending the next part
 
     return Response(generate(), mimetype='text/event-stream')
 
