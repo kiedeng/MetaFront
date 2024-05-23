@@ -9,28 +9,6 @@ from metagpt.logs import logger
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
-clients = []
-
-
-def send_data():
-    count = 0
-    while True:
-        # 在这里可以根据需要生成数据
-        data = 'data: {}\n\n'.format(count)
-        for client in clients:
-            client.put(data)
-        count += 1
-        time.sleep(1)  # 这里可以根据需要调整发送数据的频率
-
-class ClientQueue:
-    def __init__(self):
-        self.queue = []
-
-    def put(self, item):
-        self.queue.append(item)
-
-    def get(self):
-        return self.queue.pop(0) if self.queue else None
 
 @app.route('/')
 def index():
@@ -52,25 +30,9 @@ async def chat_stream():
         {"type": "end", "content": "结束"}
     ]
 
-
-    client_queue = ClientQueue()
-    clients.append(client_queue)
-
-
     async def generate():
-
+        
         for response in responses:
-            res = 0
-            while True:
-                res += 1
-                if res > 5:
-                    break
-                data = client_queue.get()
-                if data:
-                    yield data
-                else:
-                    time.sleep(0.1)
-
             if response['type'] in ['text', 'markdown']:
                 for char in response['content']:
                     yield f"data: {json.dumps({'type': response['type'], 'content': char})}\n\n"

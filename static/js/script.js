@@ -2,7 +2,7 @@ document.getElementById('chat-form').addEventListener('submit', function(e) {
     e.preventDefault();
     var message = document.getElementById('message').value;
     var chatBox = document.getElementById('chat-box');
-    chatBox.innerHTML += '<div class="chat-message user"><img src="path/to/user-avatar.jpg" class="avatar"><div class="message-content"><strong>你:</strong> ' + message + '</div></div>';
+    chatBox.innerHTML += '<div class="chat-message user"><img src="uploads/user-avatar.jpg" class="avatar"><div class="message-content"><strong>你:</strong> ' + message + '</div></div>';
     
     fetch('/send-message', {
         method: 'POST',
@@ -15,6 +15,17 @@ document.getElementById('chat-form').addEventListener('submit', function(e) {
     .then(data => {
         if (data.success) {
             var source = new EventSource('/chat-stream?message=' + encodeURIComponent(message));
+            var aiMessageContent = '';
+
+            // Create a unique ID for the AI message content
+            var uniqueId = 'ai-message-content-' + Date.now();
+
+            // Create an AI message container
+            var aiMessageContainer = document.createElement('div');
+            aiMessageContainer.className = 'chat-message ai';
+            aiMessageContainer.innerHTML = '<img src="uploads/ai-avatar.jpg" class="avatar"><div class="message-content" id="' + uniqueId + '"></div>';
+            chatBox.appendChild(aiMessageContainer);
+            var aiContentElement = document.getElementById(uniqueId);
 
             source.onmessage = function(event) {
                 var response = JSON.parse(event.data);
@@ -22,35 +33,43 @@ document.getElementById('chat-form').addEventListener('submit', function(e) {
                 var content = response.content;
 
                 if (type === 'text') {
-                    chatBox.innerHTML += '<div class="chat-message ai"><img src="path/to/ai-avatar.jpg" class="avatar"><div class="message-content"><strong>AI:</strong> <span>' + content + '</span></div></div>';
+                    aiMessageContent += content;
+                    aiContentElement.innerHTML = '<span>' + aiMessageContent + '</span>';
                 } else if (type === 'image') {
-                    chatBox.innerHTML += '<div class="chat-message ai"><img src="path/to/ai-avatar.jpg" class="avatar"><div class="message-content"><strong>AI:</strong> <img src="' + content + '" class="clickable-image" /></div></div>';
+                    aiMessageContent += '<div><img src="' + content + '" class="clickable-image" /></div>';
+                    aiContentElement.innerHTML = aiMessageContent;
                 } else if (type === 'file') {
-                    chatBox.innerHTML += '<div class="chat-message ai"><img src="path/to/ai-avatar.jpg" class="avatar"><div class="message-content"><strong>AI:</strong> <a href="' + content + '" download class="btn btn-secondary">下载文件</a></div></div>';
+                    aiMessageContent += '<div><a href="' + content + '" download class="btn btn-secondary">下载文件</a></div>';
+                    aiContentElement.innerHTML = aiMessageContent;
                 } else if (type === 'table') {
-                    chatBox.innerHTML += '<div class="chat-message ai"><img src="path/to/ai-avatar.jpg" class="avatar"><div class="message-content">' + content + '</div></div>';
+                    aiMessageContent += '<div>' + content + '</div>';
+                    aiContentElement.innerHTML = aiMessageContent;
                 } else if (type === 'markdown') {
+                    aiMessageContent += content;
                     var converter = new showdown.Converter();
-                    var html = converter.makeHtml(content);
-                    chatBox.innerHTML += '<div class="chat-message ai"><img src="path/to/ai-avatar.jpg" class="avatar"><div class="message-content markdown-content">' + html + '</div></div>';
-                    
-                    document.querySelectorAll('.markdown-content pre code').forEach((block) => {
-                        hljs.highlightElement(block);
-                        
-                        // Add copy button
-                        var button = document.createElement('button');
-                        button.className = 'copy-button';
-                        button.innerText = '复制';
-                        button.addEventListener('click', function() {
-                            var code = block.innerText;
-                            navigator.clipboard.writeText(code).then(function() {
-                                alert('代码已复制到剪贴板');
-                            }).catch(function(err) {
-                                console.error('复制失败:', err);
+                    var html = converter.makeHtml(aiMessageContent);
+                    aiContentElement.innerHTML = '<div class="markdown-content">' + html + '</div>';
+
+                    setTimeout(function() {
+                        document.querySelectorAll('.markdown-content pre code').forEach((block) => {
+                            hljs.highlightElement(block);
+
+                            var button = document.createElement('button');
+                            button.className = 'copy-button';
+                            button.innerText = '复制';
+                            button.addEventListener('click', function() {
+                                var code = block.innerText;
+                                navigator.clipboard.writeText(code).then(function() {
+                                    alert('代码已复制到剪贴板');
+                                }).catch(function(err) {
+                                    console.error('复制失败:', err);
+                                });
                             });
+                            block.parentNode.insertBefore(button, block);
                         });
-                        block.parentNode.insertBefore(button, block);
-                    });
+                    }, 100);
+                } else if (type === 'end') {
+                    source.close();
                 }
 
                 chatBox.scrollTop = chatBox.scrollHeight;
